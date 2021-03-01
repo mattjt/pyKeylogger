@@ -3,7 +3,7 @@ Known bugs
 - The compiled executable has a tendency to get flagged by AV systems
     - Create an exclusion or turn off AV before running the keylogger executable
 
-Deployment
+Usage/Deployment
 -
 Drop the compiled executable onto a Windows system and run it. If the program was run with admin rights,
 it will create a system service to start it back up when the system restarts. Once the tool
