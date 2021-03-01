@@ -1,0 +1,2 @@
+Todo:
+- Package as executable
