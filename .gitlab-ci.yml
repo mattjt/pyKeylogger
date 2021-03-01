@@ -5,15 +5,15 @@ before_script:
   - pip install -r requirements.txt
 
 stages:
-  - Static Analysis
-  - Compile executable
+  - pylint
+  - build
 
 pylint:
-  stage: Static Analysis
+  stage: pylint
   script:
-    - pylint -d C0301 src/*.py
+    - pylint *.py
 
-pyinstaller:
-  stage: Compile Executable
+build:
+  stage: build
   script:
     - pyinstaller --noconsole keylogger.py
