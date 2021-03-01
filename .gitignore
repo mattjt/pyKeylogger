@@ -1,6 +1,7 @@
 .idea
 *.pyc
 venv
+venv368
 swig
 dist
 build
