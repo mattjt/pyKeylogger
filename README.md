@@ -1,3 +1,5 @@
+This is a redteam tool developed for CSEC-473.
+
 Known bugs
 -
 - The compiled executable has a tendency to get flagged by AV systems
